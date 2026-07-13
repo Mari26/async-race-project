@@ -93,13 +93,13 @@ export const carApi = {
    * @param page - Current page number.
    * @param limit - Items per page (defaults to 10 for winners).
    * @param sort - Field to sort by ('id' | 'wins' | 'time').
-   * @param order - Order direction ('ASC' | 'DESC').
+   * @param order - Order direction ('asc' | 'desc').
    */
   getWinners: async (
     page: number, 
     limit = 10, 
     sort: 'id' | 'wins' | 'time' = 'id', 
-    order: 'ASC' | 'DESC' = 'ASC'
+    order: 'asc' | 'desc' = 'asc' 
   ): Promise<{ winners: { id: number; wins: number; time: number }[]; totalCount: number }> => {
     const response = await fetch(
       `${BASE_URL}/winners?_page=${page}&_limit=${limit}&_sort=${sort}&_order=${order}`

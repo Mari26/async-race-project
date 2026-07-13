@@ -17,7 +17,7 @@ interface WinnersState {
   totalCount: number;
   page: number;
   sort: 'id' | 'wins' | 'time';
-  order: 'ASC' | 'DESC';
+  order: 'asc' | 'desc'; 
   loading: boolean;
   error: string | null;
 }
@@ -27,7 +27,7 @@ const initialState: WinnersState = {
   totalCount: 0,
   page: 1,
   sort: 'id',
-  order: 'ASC',
+  order: 'asc',
   loading: false,
   error: null,
 };
@@ -43,7 +43,7 @@ const winnersSlice = createSlice({
     setPage: (state, action: PayloadAction<number>) => {
       state.page = action.payload;
     },
-    setSortOrder: (state, action: PayloadAction<{ sort: 'id' | 'wins' | 'time'; order: 'ASC' | 'DESC' }>) => {
+    setSortOrder: (state, action: PayloadAction<{ sort: 'id' | 'wins' | 'time'; order: 'asc' | 'desc' }>) => {
       state.sort = action.payload.sort;
       state.order = action.payload.order;
     },
@@ -64,6 +64,7 @@ export const fetchWinners = () => async (dispatch: AppDispatch, getState: () => 
   const { page, sort, order } = getState().winners;
   dispatch(setLoading(true));
   try {
+    // asc/desc
     const { winners, totalCount } = await carApi.getWinners(page, 10, sort, order);
     
     // Fetch detailed car specifications (name, color) for each winner row

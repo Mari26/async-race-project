@@ -19,18 +19,16 @@ export default function WinnersTable() {
 
   const handleSort = (field: 'id' | 'wins' | 'time') => {
     if (sort === field) {
-      // Toggle direction if clicking the same field
-      dispatch(setSortOrder({ sort: field, order: order === 'ASC' ? 'DESC' : 'ASC' }));
+      dispatch(setSortOrder({ sort: field, order: order === 'asc' ? 'desc' : 'asc' }));
     } else {
-      // Default to ASC for a new field
-      dispatch(setSortOrder({ sort: field, order: 'ASC' }));
+      dispatch(setSortOrder({ sort: field, order: 'asc' }));
     }
-    dispatch(setPage(1)); // Reset to first page on sort
+    dispatch(setPage(1)); 
   };
 
   const renderSortIcon = (field: 'id' | 'wins' | 'time') => {
     if (sort !== field) return null;
-    return order === 'ASC' ? ' 🔼' : ' 🔽';
+    return order === 'asc' ? ' 🔼' : ' 🔽';
   };
 
   return (
@@ -100,24 +98,22 @@ export default function WinnersTable() {
           Page {page} of {totalPages || 1} • Total records: {totalCount}
         </div>
 
-        {totalCount > WINNERS_PER_PAGE && (
-          <div className="btn-group">
-            <button
-              className="btn btn-sm btn-outline-primary px-3"
-              disabled={page === 1 || loading}
-              onClick={() => dispatch(setPage(page - 1))}
-            >
-              &larr; Prev
-            </button>
-            <button
-              className="btn btn-sm btn-outline-primary px-3"
-              disabled={page >= totalPages || loading}
-              onClick={() => dispatch(setPage(page + 1))}
-            >
-              Next &rarr;
-            </button>
-          </div>
-        )}
+        <div className="btn-group">
+          <button
+            className="btn btn-sm btn-outline-primary px-3"
+            disabled={page === 1 || loading}
+            onClick={() => dispatch(setPage(page - 1))}
+          >
+            &larr; Prev
+          </button>
+          <button
+            className="btn btn-sm btn-outline-primary px-3"
+            disabled={page >= totalPages || loading}
+            onClick={() => dispatch(setPage(page + 1))}
+          >
+            Next &rarr;
+          </button>
+        </div>
       </div>
     </div>
   );
