@@ -6,6 +6,7 @@ import { carApi } from '../../api/carApi';
 import { saveRaceWinnerAction } from './winnersSlice';
 
 const abortControllers: Record<number, AbortController> = {};
+let isWinnerFound = false;
 
 const initialState: GarageState = {
   cars: [],
@@ -162,8 +163,10 @@ export const updateCarAction = () => async (dispatch: AppDispatch, getState: () 
   }
 };
 
-export const startEngineAction = (id: number) => async (dispatch: AppDispatch) => {
+export const startEngineAction = (id: number) => async (dispatch: AppDispatch, getState: () => RootState) => {
   try {
+    dispatch(updateCarEngine({ id, status: 'started', speed: 0 }));
+
     if (abortControllers[id]) abortControllers[id].abort();
     const controller = new AbortController();
     abortControllers[id] = controller;
@@ -171,13 +174,23 @@ export const startEngineAction = (id: number) => async (dispatch: AppDispatch) =
     const { velocity, distance } = await carApi.toggleEngine(id, 'started');
     const speed = distance / velocity; 
     
-    dispatch(updateCarEngine({ id, status: 'started', speed }));
-    dispatch(updateCarEngine({ id, status: 'drive' }));
+    dispatch(updateCarEngine({ id, status: 'drive', speed }));
     
     const driveStatus = await carApi.startDriveMode(id, controller.signal);
     
     if (driveStatus && driveStatus.success) {
       dispatch(updateCarEngine({ id, status: 'finished' }));
+
+      const currentState = getState().garage;
+      if (currentState.isRaceActive && !isWinnerFound) {
+        isWinnerFound = true;
+        const winnerCar = currentState.cars.find(c => c.id === id);
+        if (winnerCar) {
+          const timeInSeconds = (speed / 1000).toFixed(2);
+          dispatch(setRaceWinner(`${winnerCar.name} went first (${timeInSeconds}s)!`));
+          dispatch(saveRaceWinnerAction(id, speed));
+        }
+      }
     } else {
       dispatch(updateCarEngine({ id, status: 'broken' }));
     }
@@ -191,12 +204,14 @@ export const startEngineAction = (id: number) => async (dispatch: AppDispatch) =
 
 export const stopEngineAction = (id: number) => async (dispatch: AppDispatch) => {
   try {
+    dispatch(updateCarEngine({ id, status: 'stopped', speed: 0 }));
+
     if (abortControllers[id]) {
       abortControllers[id].abort();
       delete abortControllers[id];
     }
+   
     await carApi.toggleEngine(id, 'stopped');
-    dispatch(updateCarEngine({ id, status: 'stopped', speed: 0 }));
   } catch {
     dispatch(setError('Failed to stop the engine.'));
   }
@@ -209,6 +224,7 @@ export const startRaceAction = () => async (dispatch: AppDispatch, getState: () 
   const hasActiveCars = cars.some(car => car.engineStatus && car.engineStatus !== 'stopped');
   if (hasActiveCars) return;
 
+  isWinnerFound = false;
   dispatch(setRaceWinner(null));
   dispatch(setRaceActive(true));
   
@@ -216,28 +232,13 @@ export const startRaceAction = () => async (dispatch: AppDispatch, getState: () 
   
   await Promise.all(racePromises);
 
-  const currentStore = getState().garage;
-  if (!currentStore.isRaceActive) return;
-
-  const finishedCars = currentStore.cars.filter(car => car.engineStatus === 'finished');
-
-  if (finishedCars.length > 0) {
-    const winnerCar = finishedCars.reduce((min, current) => 
-      (current.speed || Infinity) < (min.speed || Infinity) ? current : min, 
-      finishedCars[0]
-    );
-
-    const timeInSeconds = ((winnerCar.speed || 0) / 1000).toFixed(2);
-    dispatch(setRaceWinner(`${winnerCar.name} went first (${timeInSeconds}s)!`));
-    dispatch(saveRaceWinnerAction(winnerCar.id, winnerCar.speed || 0));
-  }
-
   dispatch(setRaceActive(false));
 };
 
 export const resetRaceAction = () => (dispatch: AppDispatch, getState: () => RootState) => {
   const { cars } = getState().garage;
 
+  isWinnerFound = false;
   dispatch(setRaceActive(false));
   dispatch(setRaceWinner(null));
   dispatch(resetAllEngines());

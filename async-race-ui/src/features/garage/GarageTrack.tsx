@@ -16,11 +16,19 @@ export default function GarageTrack({ car }: GarageTrackProps) {
   const isFinished = car.engineStatus === 'finished';
   const isStarted = car.engineStatus === 'started' || isDriving || isBroken || isFinished;
   
-  const carStyle = {
-    transform: (isDriving || isBroken || isFinished) ? 'translateX(calc(100cqw - 65px))' : 'translateX(0px)',
-    transition: isDriving ? `transform ${car.speed ? car.speed / 1000 : 0}s linear` : 'none',
-    zIndex: 2,
-  };
+ const carStyle = {
+  // Apply CSS animation if driving, broken, or finished; otherwise, disable it
+  animationName: (isDriving || isBroken || isFinished) ? 'raceAnimation' : 'none', 
+  // Calculate duration dynamically based on server response
+  animationDuration: `${car.speed ? car.speed / 1000 : 0}s`,
+  // Ensure constant movement speed
+  animationTimingFunction: 'linear', 
+  // Keep the car at the finish line after the animation ends
+  animationFillMode: 'forwards',  
+  // The most crucial line! Pause the animation mid-track if the engine breaks down
+  animationPlayState: isBroken ? 'paused' : 'running',
+  zIndex: 2,
+};
 
   return (
     <div className="row align-items-center border-bottom py-2 g-2 bg-secondary bg-opacity-10 position-relative mx-0">

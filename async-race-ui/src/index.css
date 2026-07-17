@@ -109,3 +109,12 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+@keyframes raceAnimation {
+  from {
+    transform: translateX(0px);
+  }
+  to {
+    transform: translateX(calc(100cqw - 65px));
+  }
+}
